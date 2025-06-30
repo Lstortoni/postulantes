@@ -1,0 +1,258 @@
+*************************************************************************************************************************************************************************************************************************************************
+PROYECTO POSTULANTES - INICO                                                                     
+***********************************************************************************************************************************************************************************************************************************************
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+INDICE
+
+1 - Idea
+2 - Configuración 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Idea
+
+ Objetivo del Proyecto
+	Desarrollar una API REST en Spring Boot para gestionar una base de datos de personas que se postulan a trabajos.
+	Cada postulante puede registrarse con información relevante para facilitar la búsqueda de empleo.
+
+	Datos que almacena cada postulante:
+
+	Nombre y apellido.
+
+	Puesto/oficio que ofrece (ejemplo: programador, diseñador, electricista, etc).
+
+	Descripción de presentación.
+
+	Zona de preferencia para trabajar.
+
+	Zona de residencia (donde vive actualmente).
+
+	Lista de cursos realizados (nombre y breve descripción).
+
+	Lista de experiencias laborales (nombre de empresa/institución y breve descripción).
+
+	Ejemplo:
+
+	Daniel, programador, vive en La Plata, descripción personal, cursos hechos (lista), experiencias laborales (lista).
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Configuración dependencias
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1-
+	Stack Tecnológico y Dependencias Iniciales
+	
+	Spring Boot 3.5.3
+
+	Java 21
+
+	Maven
+
+	PostgreSQL (para la base de datos)
+
+	Spring Web (API REST)
+
+	Spring Data JPA (persistencia de datos)
+
+	Lombok (para reducir código boilerplate)
+
+	Spring Boot DevTools (facilita el desarrollo)
+
+	Spring for Apache Kafka ⬅️ (NUEVA, para mensajería asíncrona)
+
+2 - 
+  Envío Asíncrono de Email usando Kafka
+	Objetivo:
+	Cuando un postulante se registre, la API publicará un mensaje en un tópico de Kafka con la información necesaria para enviar un email de confirmación o notificación.
+	El envío del email será procesado por un consumidor Kafka, de manera asíncrona, desacoplando la lógica de registro del envío del email.
+
+	Ventajas:
+
+	El registro es rápido para el usuario (no espera el envío del email).
+
+	El sistema es escalable: podés tener varios consumidores procesando los emails.
+
+	Si el servicio de email falla, el mensaje se mantiene en Kafka para ser procesado luego.
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Configuración Docker
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 1 - La idea es poder dockerizar la aplicación y poder dokerizar la base de datos
+     - Un contenedor para la base (postgre)
+	 - Un contenedor para la aplicacion
+	
+ 2 - Creo un Dockerfile y un docker-compose
+ 
+
+
+
+
+
+*************************************************************************************************************************************************************************************************************************************************
+PROYECTO POSTULANTES - Dominio de clases                                                                 
+***********************************************************************************************************************************************************************************************************************************************
+	1. Usuario
+		Propósito:
+		Representa la cuenta con la que una persona accede al sistema. Contiene las credenciales (user, password) y el rol (ADMIN, POSTULANTE).
+		No almacena datos personales, solo datos de autenticación y rol de usuario.
+
+	2. Rol (enum)
+		Propósito:
+		Enumerativo que define los distintos tipos de usuarios del sistema.
+		Actualmente incluye roles como ADMIN y POSTULANTE.
+
+	3. Postulante
+		Propósito:
+		Entidad que representa a una persona que se postula a empleos.
+		Almacena los datos personales y toda la información relevante para su postulación:
+
+		nombre
+
+		apellido
+
+		email
+
+		Relación con su cuenta de usuario (usuario: Usuario)
+
+		Dirección de residencia (direccion: Direccion)
+
+		Lista de cursos realizados (List<Curso>)
+
+		Lista de experiencias laborales (List<ExperienciaLaboral>)
+
+		Descripción personal (descripcionPostulante)
+
+		Ciudad de preferencia para trabajar (ciudadPreferencia: Ciudad)
+
+	4. Direccion
+		Propósito:
+		Modela la dirección física del postulante, incluyendo:
+
+		ciudad (relación con Ciudad)
+
+		calle
+
+		codigoPostal
+
+		nroCasa (número de la casa)
+
+	5. Ciudad
+		Propósito:
+		Representa una ciudad, utilizada tanto para la dirección del postulante como para su ciudad de preferencia laboral.
+
+		nombre
+
+		codigoPostal
+
+	6. Curso
+		Propósito:
+		Describe un curso o capacitación realizada por el postulante.
+		Incluye:
+
+		nombre
+
+		descripcion (breve descripción del curso)
+
+	7. Experiencia
+		Propósito:
+		Registra una experiencia laboral previa del postulante.
+		Incluye:
+
+		lugar (nombre del lugar de trabajo)
+
+		fechaInicio
+
+		fechaFin
+
+		descripcion (breve resumen de las tareas o logros)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Definicion de clases
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 1 . 
+	@Data
+	@AllArgsConstructor
+	@NoArgsConstructor
+	@Entity
+	public class Ciudad {
+		private Long id;
+		private String nombre;
+		private String codigoPostal;
+	}
+
+  2 . 
+    @Data
+	@AllArgsConstructor
+	@NoArgsConstructor
+	@Entity
+	public class Curso {
+		
+		private Long id;
+		private String nombre;
+		private String descripcion;
+	}
+	
+  3 . 
+    @Data
+	@AllArgsConstructor
+	@NoArgsConstructor
+	@Entity
+	public class Direccion {
+		private Long id;
+		private Ciudad ciudad;
+		private String calle;
+		private String codigoPostal;
+		private String nroCasa; 
+	}
+	
+  4 . 
+    @Data
+	@AllArgsConstructor
+	@NoArgsConstructor
+	@Entity
+	public class Experiencia {
+		
+		private Long id;
+		private String lugar;
+		private Date fechaInicio;
+		private Date fechaFin;
+		private String descripcion;
+	}
+  5 . 
+    @Data
+	@AllArgsConstructor
+	@NoArgsConstructor
+	@Entity
+	public class Postulante {
+		private Long id;
+		private String nombre;
+		private String apellido;
+		private String email;
+		private Usuario usuario;
+		private Direccion direccion;
+		private List<Curso> cursosRealizados;
+		private List<Experiencia> experienciasLaborales;
+		private String descripcionPostulante;
+		private Ciudad ciudadPreferencia;
+	}
+  6 . 
+	@Data
+	@AllArgsConstructor
+	@NoArgsConstructor
+	@Entity
+	public class Usuario {
+		
+		private Long id;
+		private String user;
+		private String password;
+		private Rol rol;
+		
+	}
+   
+   7 . 
+   
+    public enum Rol {
+    ADMIN,
+    POSTULANTE
+    }
+
+

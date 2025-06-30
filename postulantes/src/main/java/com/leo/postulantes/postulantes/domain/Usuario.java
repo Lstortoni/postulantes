@@ -1,0 +1,28 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package com.leo.postulantes.postulantes.domain;
+
+import jakarta.persistence.Entity;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * El usuario que tiene el rol. 
+ * @author Leo Stortoni
+ */
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Entity
+public class Usuario {
+    
+    private Long id;
+    private String user;
+    private String password;
+    private Rol rol;
+    
+}

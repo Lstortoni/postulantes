@@ -5,7 +5,7 @@
 package com.leo.postulantes.postulantes.domain;
 
 /**
- * Representa los posibles roles. 
+ * Representa los posibles roles de un usuario.
  * @author Leo Stortoni
  */
 public enum Rol {

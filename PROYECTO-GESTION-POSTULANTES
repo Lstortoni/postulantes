@@ -256,3 +256,252 @@ Definicion de clases
     }
 
 
+*************************************************************************************************************************************************************************************************************************************************
+PROYECTO POSTULANTES - Configuración relacion (Hibernate)                                                             
+***********************************************************************************************************************************************************************************************************************************************
+	¿Cómo se define el ID en JPA/Hibernate?
+	1. Campo ID
+
+		@Id
+		@GeneratedValue(strategy = GenerationType.SEQUENCE)
+		private Long id_mascota;
+		@Id: Indica que este campo es la clave primaria de la entidad.
+
+		@GeneratedValue: Define cómo se genera ese ID automáticamente.
+
+		Opciones para la generación de ID (@GeneratedValue)
+		La anotación tiene varias estrategias, que podés elegir según la base de datos y tu necesidad:
+
+		A. GenerationType.IDENTITY
+			Delega al motor de base de datos la generación automática (muy usado en MySQL y PostgreSQL).
+
+			Crea un campo autoincremental (como un SERIAL en Postgres o AUTO_INCREMENT en MySQL).
+
+			Ejemplo:
+
+
+		@GeneratedValue(strategy = GenerationType.IDENTITY)
+		private Long id_mascota;
+		B. GenerationType.SEQUENCE
+			Usa una secuencia de la base de datos (muy típico en Oracle, PostgreSQL).
+
+			Se puede personalizar la secuencia con @SequenceGenerator.
+
+			Ejemplo simple:
+
+			@Id
+			@GeneratedValue(strategy = GenerationType.SEQUENCE)
+			private Long id_mascota;
+			Ejemplo personalizado:
+
+
+		@Id
+		@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "mascota_seq")
+		@SequenceGenerator(name = "mascota_seq", sequenceName = "mascota_sequence", allocationSize = 1)
+		private Long id_mascota;
+		Esto crea una secuencia en la base llamada mascota_sequence que Hibernate usará para asignar IDs.
+
+		C. GenerationType.AUTO
+		Deja que JPA elija la mejor estrategia según la base de datos.
+
+		Suele usar SEQUENCE en bases como Oracle/Postgres, o IDENTITY en MySQL.
+
+		Ejemplo:
+
+
+		@Id
+		@GeneratedValue(strategy = GenerationType.AUTO)
+		private Long id_mascota;
+		D. GenerationType.TABLE
+			Usa una tabla especial para llevar la cuenta de los IDs (más portable, pero rara vez se usa porque es menos eficiente).
+
+			Ejemplo:
+
+			@Id
+			@GeneratedValue(strategy = GenerationType.TABLE)
+			private Long id_mascota;
+			¿Cuál usar?
+			MySQL/PostgreSQL: IDENTITY suele ser lo más sencillo.
+
+			Oracle: SEQUENCE es lo ideal.
+
+			Multi-base: AUTO te deja más flexible, pero no siempre da el resultado esperado en cada motor.
+
+		¿Querés controlar vos el ID? No pongas @GeneratedValue, y asigná el valor manualmente.
+	
+	Apliquemos a nuestro esquema : 
+	
+	 1 .  Relaciones de postulante
+	 
+	    1.1 -  Relacion 1-1 con usuario
+		1.2 -  Relacion 1.n con experienciasLaborales
+		1.3 -  Relacion 1.n con cursos realizados.
+		1.4 -  Relacion 1.1 o 1.1 con Direcion.
+	 
+	
+	     Algo a Tener en cuenta : 
+		 
+		  En mappedBy, va SIEMPRE el nombre exacto del atributo de la clase dueña de la relación (en este caso, el atributo direccion en la clase Postulante).
+
+          No va el tipo de dato ni el nombre de la columna, solo el nombre del atributo Java.
+	
+		Resolucion :
+		
+		1.1 -  
+		    A )Paso 1: En Postulantes 
+				@OneToOne
+				@JoinColumn(name = "usuario_id") // referencia a Usuario.id por defecto
+				private Usuario usuario;
+			 
+			 
+			   ¿Por qué @JoinColumn?
+			     Esto le dice a JPA que la tabla Postulante va a tener la columna usuario_id que referencia a la PK de Usuario.
+				 Este lado es el dueño de la relación.
+			
+			B) Paso 2: En la clase Usuario (lado inverso)
+			    
+				@OneToOne(mappedBy = "usuario")
+                private Postulante postulante;
+				
+				¿Por qué mappedBy = "usuario"?
+                 Esto le dice a JPA que el mapeo está en el atributo usuario de la clase Postulante y que NO agregue una columna FK en la tabla Usuario (ya está en Postulante).
+		
+	    1.2 -
+		 
+		   A) Paso 1: En Postulantes 
+		   
+		       
+			  // Un postulante - Muchas experiencias
+			  @OneToMany(mappedBy = "postulante", cascade = CascadeType.ALL, orphanRemoval = true)
+			  private List<Experiencia> experienciasLaborales;
+
+           B)  Paso 2: Experiencia	   
+		  
+		    @ManyToOne
+			@JoinColumn(name = "postulante_id")
+			private Postulante postulante;
+			
+	    1.3 -
+		 
+		   A) Paso 1: En Postulantes 
+		   
+		       
+			// Un postulante puede tener muchos cursos
+            @OneToMany(mappedBy = "postulante", cascade = CascadeType.ALL, orphanRemoval = true)
+            private List<Curso> cursosRealizados;
+
+           B)  Paso 2: Curso
+		            
+	        // Relación con postulante
+            @ManyToOne
+            @JoinColumn(name = "postulante_id")
+            private Postulante postulante;
+
+        1.4 -  
+		    A )Paso 1: En Postulantes 
+				@OneToOne
+				@JoinColumn(name = "direccin_id") // referencia a Direecion.id por defecto
+				private Direccion direccion;
+			 
+			 
+			   ¿Por qué @JoinColumn?
+			     Esto le dice a JPA que la tabla Postulante va a tener la columna direcion_id que referencia a la PK de Direccion.
+				 Este lado es el dueño de la relación.
+			
+			B) Paso 2: En la clase Direecion (lado inverso)
+			    
+				@OneToOne(mappedBy = "direecin")
+                private Postulante postulante;
+				
+				¿Por qué mappedBy = "direecion"?
+                 Esto le dice a JPA que el mapeo está en el atributo direecion de la clase Postulante y que NO agregue una columna FK en la tabla Direcion (ya está en Postulante).
+		
+		
+		
+		@Data
+		@AllArgsConstructor
+		@NoArgsConstructor
+		@Entity
+		public class Postulante {
+			
+			@Id
+			@GeneratedValue(strategy = GenerationType.SEQUENCE)
+			private Long id;
+			private String nombre;
+			private String apellido;
+			private String email;
+		   @OneToOne
+		   @JoinColumn(name = "usuario_id") // referencia a Usuario.id por defecto
+			private Usuario usuario;
+		   @OneToOne
+		   @JoinColumn(name = "direccin_id") // referencia a Direecion.id por defecto
+		   private Direccion direccion;
+				 
+		  // Un postulante puede tener muchos cursos
+			@OneToMany(mappedBy = "postulante", cascade = CascadeType.ALL, orphanRemoval = true)        
+			private List<Curso> cursosRealizados;
+			//Un postulante - Muchas experiencias
+		   @OneToMany(mappedBy = "postulante", cascade = CascadeType.ALL, orphanRemoval = true)
+			private List<Experiencia> experienciasLaborales;
+			private String descripcionPostulante;
+			private Ciudad ciudadPreferencia;
+		}
+
+		
+     2 .  Relaciones de Direccion
+	     */
+		@Data
+		@AllArgsConstructor
+		@NoArgsConstructor
+		@Entity
+		public class Direccion {
+			@Id
+			@GeneratedValue(strategy = GenerationType.SEQUENCE)
+			private Long id;
+			private Ciudad ciudad;
+			private String calle;
+			private String codigoPostal;
+			private String nroCasa; 
+			
+			 
+			@OneToOne(mappedBy = "direccion")
+			private Postulante postulante;
+		}
+
+	 
+	 3 .  Relaciones de Curso
+	 
+	    @Data
+		@AllArgsConstructor
+		@NoArgsConstructor
+		@Entity
+		public class Curso {
+			@Id
+			@GeneratedValue(strategy = GenerationType.SEQUENCE)
+			private Long id;
+			private String nombre;
+			private String descripcion;
+			// Relación con postulante
+			@ManyToOne
+			@JoinColumn(name = "postulante_id")
+			private Postulante postulante;
+		}
+	 
+	 4 .  Relaciones de Experiencia
+	 
+	     @Data
+		@AllArgsConstructor
+		@NoArgsConstructor
+		@Entity
+		public class Experiencia {
+			@Id
+			@GeneratedValue(strategy = GenerationType.SEQUENCE)
+			private Long id;
+			private String lugar;
+			private Date fechaInicio;
+			private Date fechaFin;
+			private String descripcion;
+			@ManyToOne
+			@JoinColumn(name = "postulante_id")
+			private Postulante postulante;
+		}

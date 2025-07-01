@@ -5,6 +5,10 @@
 package com.leo.postulantes.postulantes.domain;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,9 +22,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 public class Direccion {
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
     private Ciudad ciudad;
     private String calle;
     private String codigoPostal;
     private String nroCasa; 
+    
+     
+    @OneToOne(mappedBy = "direccion")
+    private Postulante postulante;
 }
